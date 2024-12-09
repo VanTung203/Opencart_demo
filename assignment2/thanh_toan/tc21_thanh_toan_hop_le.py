@@ -126,11 +126,37 @@ def test_valid_checkout(driver):
     # Cuộn xuống cuối trang
     driver.execute_script("arguments[0].scrollIntoView(true);", driver.find_element(By.CSS_SELECTOR, "#input-shipping-address-2"))
     time.sleep(5)
+    # Kiểm tra tiền sản phẩm
+    product_price_elements = driver.find_elements(By.CSS_SELECTOR,
+                                                  "#checkout-confirm > div.table-responsive > table > tbody > tr > td.text-end")
+    # Chuyển đổi giá tiền sang số thực
+    product_prices = [
+        float(elem.text.replace(",", "").replace("$", ""))
+        for elem in product_price_elements
+    ]
+    # Kiểm tra phí vận chuyển
+    shipping_text = driver.find_element(By.CSS_SELECTOR,
+                                        "#checkout-confirm > div.table-responsive > table > tfoot > tr:nth-child(2) > td:nth-child(2)").text
+    shipping_fee = float(shipping_text.replace(",", "").replace("$", ""))
+    # Tính tổng giá trị
+    calculated_total = sum(product_prices) + shipping_fee
+    # Kiểm tra tổng tiền
+    total_text = driver.find_element(By.CSS_SELECTOR,
+                                     "#checkout-confirm > div.table-responsive > table > tfoot > tr:nth-child(3) > td:nth-child(2)").text
+    total = float(total_text.replace(",", "").replace("$", ""))
+    # Kiểm tra kết quả
+    assert calculated_total == total, f"Expected {total}, but got {calculated_total}"
+    # Chọn Confirm Order
     driver.find_element(By.CSS_SELECTOR, "#button-confirm").click()
-    time.sleep(1)
+    time.sleep(5)
     assert "http://localhost/opencartsite/index.php?route=checkout/success&language=en-gb" in driver.current_url
     # Kiểm tra xem thông báo thành công có xuất hiện không
     success_message = driver.find_element(By.TAG_NAME, "h1").text
     assert success_message == "Your order has been placed!"
-
+    # # In kết quả
+    # print(" Kết quả: ")
+    # print(f"Giá sản phẩm: {product_prices}")
+    # print(f"Phí vận chuyển: {shipping_fee}")
+    # print(f"Tổng giá sản phẩm và phí vận chuyển: {calculated_total}")
+    # print(f"Số tiền cần phải thanh toán cho đơn hàng: {total}")
 
